@@ -25,7 +25,7 @@ device = torch.device('cuda')
 model = model.to(device)
 model = torch.compile(model)
 
-train_dataloader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
+train_dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
 epochs = 3
 training_steps = epochs * len(train_dataloader)
 progress_bar = tqdm(range(training_steps))
