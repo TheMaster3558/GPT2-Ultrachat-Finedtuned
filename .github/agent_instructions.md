@@ -23,7 +23,7 @@
 - `train.py` must be executed second, as it loads the tokenizer and dataset from the Hub
 
 ### Hugging Face Hub Repository Naming
-- Tokenizer: `{username}/gpt2-ultrachat-tokenizer`
+- Tokenizer: `{username}/gpt2-ultrachat-finetuned`
 - Dataset: `{username}/ultrachat-tokenized-dataset`
 - Model: `{username}/gpt2-ultrachat-finetuned`
 

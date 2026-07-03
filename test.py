@@ -14,29 +14,29 @@ user_info = whoami()
 username = user_info['name']
 
 model = GPT2LMHeadModel.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
+tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-fintuned')
 
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='test')
 dataset.set_format('torch')
 
-test_dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda')
 model = model.to(device)
+model = torch.compile(model)
 model.eval()
 
+test_dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
 
 # Calculate metrics
 total_loss = 0.0
 total_tokens = 0
-all_logits = []
-all_labels = []
 
 with torch.no_grad():
     for batch in tqdm(test_dataloader, desc='Evaluating'):
         batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = model(**batch)
-        loss = outputs.loss
+
+        with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
+            outputs = model(**batch)
+            loss = outputs.loss
 
         total_loss += loss.item() * batch['input_ids'].size(0)
         total_tokens += batch['input_ids'].size(0)
