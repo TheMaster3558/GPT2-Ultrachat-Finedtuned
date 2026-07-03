@@ -20,26 +20,32 @@ dataset.set_format('torch')
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 model.resize_token_embeddings(len(tokenizer))
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Using device: {device}')
-model.to(device)
+device = torch.device('cuda')
+model = model.to(device)
+model = torch.compile(model)
 
-train_dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
+train_dataloader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
 epochs = 3
 training_steps = epochs * len(train_dataloader)
 progress_bar = tqdm(range(training_steps))
 
-optimizer = AdamW(model.parameters(), lr=5e-5)
+optimizer = AdamW(model.parameters(), lr=5e-5, fused=True)
+
+scaler = torch.amp.GradScaler()
 
 for _ in range(epochs):
     for batch in train_dataloader:
         optimizer.zero_grad()
-        # Move all tensors in the batch to the chosen device
+
         batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = model(**batch)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
+
+        with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
+            outputs = model(**batch)
+            loss = outputs.loss
+
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
         progress_bar.update(1)
 

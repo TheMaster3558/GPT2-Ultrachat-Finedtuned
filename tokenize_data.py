@@ -8,8 +8,8 @@ load_dotenv()
 login()
 
 raw_datasets = load_dataset('HuggingFaceH4/ultrachat_200k')
-train_dataset = raw_datasets['train_sft']
-test_dataset = raw_datasets['test_sft']
+train_dataset = raw_datasets['train_sft'].shuffle().select(range(20000))
+test_dataset = raw_datasets['test_sft'].shuffle().select(range(2000))
 
 def format_conversation(example):
     text = ''
