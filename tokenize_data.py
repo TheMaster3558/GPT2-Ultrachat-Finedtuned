@@ -1,5 +1,10 @@
 from transformers import GPT2Tokenizer
 from datasets import load_dataset
+from huggingface_hub import login, whoami
+import os
+
+# Authenticate with Hugging Face Hub
+login()
 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 tokenizer.pad_token = tokenizer.eos_token
@@ -26,8 +31,8 @@ def mask_user_prompts(example):
 
     assistant_token_id = tokenizer.convert_tokens_to_ids('<|assistant|>')
     other_role_token_ids = {
-        tokenizer.convert_tokens_to_ids("<|system|>"),
-        tokenizer.convert_tokens_to_ids("<|user|>"),
+        tokenizer.convert_tokens_to_ids('<|system|>'),
+        tokenizer.convert_tokens_to_ids('<|user|>'),
     }
 
     in_assistant_span = False
@@ -45,9 +50,22 @@ def mask_user_prompts(example):
 if __name__ == '__main__':
     import os
 
+    # Get the username for creating repository names
+    user_info = whoami()
+    username = user_info['name']
+
     dataset = dataset.map(format_conversation, remove_columns=dataset.column_names, load_from_cache_file=False)
     dataset = dataset.map(tokenize, batched=True, remove_columns=dataset.column_names, num_proc=max(1, os.cpu_count() - 1), load_from_cache_file=False)
     dataset = dataset.map(mask_user_prompts, load_from_cache_file=False)
 
-    tokenizer.save_pretrained('./saved_tokenizer')
-    dataset.save_to_disk('./saved_dataset')
+    # Push tokenizer to Hub
+    tokenizer_repo = f'{username}/gpt2-ultrachat-tokenizer'
+    print(f'Pushing tokenizer to {tokenizer_repo}...')
+    tokenizer.push_to_hub(tokenizer_repo)
+    print('Tokenizer successfully pushed to Hugging Face Hub!')
+
+    # Push dataset to Hub
+    dataset_repo = f'{username}/ultrachat-tokenized-dataset'
+    print(f'Pushing dataset to {dataset_repo}...')
+    dataset.push_to_hub(dataset_repo)
+    print('Dataset successfully pushed to Hugging Face Hub!')
