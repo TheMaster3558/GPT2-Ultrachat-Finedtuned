@@ -1,11 +1,10 @@
-from transformers import GPT2LMHeadModel
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from datasets import load_dataset
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from huggingface_hub import login, whoami
 from dotenv import load_dotenv
-from tokenizer_config import tokenizer
 import torch
 
 load_dotenv()
@@ -14,6 +13,7 @@ login()
 user_info = whoami()
 username = user_info['name']
 
+tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-tokenizer')
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='train')
 dataset.set_format('torch')
 

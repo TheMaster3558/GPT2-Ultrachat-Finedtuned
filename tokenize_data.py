@@ -2,10 +2,18 @@ import psutil
 from datasets import load_dataset, DatasetDict
 from huggingface_hub import login, whoami
 from dotenv import load_dotenv
-from tokenizer_config import tokenizer
+from transformers import GPT2Tokenizer
 
 load_dotenv()
 login()
+
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.add_special_tokens({'additional_special_tokens': [
+    '<|system|>',
+    '<|user|>',
+    '<|assistant|>'
+]})
 
 raw_datasets = load_dataset('HuggingFaceH4/ultrachat_200k')
 train_dataset = raw_datasets['train_sft'].shuffle().select(range(20000))
@@ -62,6 +70,12 @@ if __name__ == '__main__':
         'train': train_dataset,
         'test': test_dataset
     })
+
+    # Push tokenizer to Hub
+    tokenizer_repo = f'{username}/gpt2-ultrachat-tokenizer'
+    print(f'Pushing tokenizer to {tokenizer_repo}...')
+    tokenizer.push_to_hub(tokenizer_repo)
+    print('Tokenizer successfully pushed to Hugging Face Hub!')
 
     # Push dataset to Hub
     dataset_repo = f'{username}/ultrachat-tokenized-dataset'
