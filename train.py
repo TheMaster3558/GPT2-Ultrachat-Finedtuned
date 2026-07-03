@@ -1,3 +1,4 @@
+import os
 from transformers import GPT2LMHeadModel
 from datasets import load_dataset
 from torch.optim import AdamW
@@ -34,7 +35,7 @@ optimizer = AdamW(model.parameters(), lr=5e-5, fused=True)
 scaler = torch.amp.GradScaler()
 
 for _ in range(epochs):
-    for batch in train_dataloader:
+    for step, batch in enumerate(train_dataloader):
         optimizer.zero_grad()
 
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -48,6 +49,9 @@ for _ in range(epochs):
         scaler.update()
 
         progress_bar.update(1)
+
+        if step % 50 == 0:
+            os.system("nvidia-smi")
 
 model_repo = f'{username}/gpt2-ultrachat-finetuned'
 print(f'Pushing model to {model_repo}...')
