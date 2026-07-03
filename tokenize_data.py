@@ -16,8 +16,8 @@ tokenizer.add_special_tokens({'additional_special_tokens': [
 ]})
 
 raw_datasets = load_dataset('HuggingFaceH4/ultrachat_200k')
-train_dataset = raw_datasets['train_sft'].shuffle().select(range(20000))
-test_dataset = raw_datasets['test_sft'].shuffle().select(range(2000))
+train_dataset = raw_datasets['train_sft'].shuffle().select(range(50000))
+test_dataset = raw_datasets['test_sft'].shuffle().select(range(5000))
 
 def format_conversation(example):
     text = ''

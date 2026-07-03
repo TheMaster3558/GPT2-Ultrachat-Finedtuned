@@ -13,7 +13,7 @@ login()
 user_info = whoami()
 username = user_info['name']
 
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-tokenizer')
+tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='train')
 dataset.set_format('torch')
 
