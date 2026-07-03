@@ -1,4 +1,3 @@
-import os
 from transformers import GPT2LMHeadModel
 from datasets import load_dataset
 from torch.optim import AdamW
@@ -50,8 +49,6 @@ for _ in range(epochs):
 
         progress_bar.update(1)
 
-        if step % 50 == 0:
-            os.system("nvidia-smi")
 
 model_repo = f'{username}/gpt2-ultrachat-finetuned'
 print(f'Pushing model to {model_repo}...')
