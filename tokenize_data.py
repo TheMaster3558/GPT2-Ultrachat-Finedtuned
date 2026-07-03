@@ -1,18 +1,10 @@
-from transformers import GPT2Tokenizer
 from datasets import load_dataset
 from huggingface_hub import login, whoami
-import os
+from dotenv import load_dotenv
+from tokenizer_config import tokenizer
 
-# Authenticate with Hugging Face Hub
+load_dotenv()
 login()
-
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-tokenizer.pad_token = tokenizer.eos_token
-tokenizer.add_special_tokens({'additional_special_tokens': [
-    '<|system|>',
-    '<|user|>',
-    '<|assistant|>'
-]})
 
 dataset = load_dataset('HuggingFaceH4/ultrachat_200k', split='train_sft')#.shuffle(seed=42).select(range(20000))
 
@@ -48,21 +40,18 @@ def mask_user_prompts(example):
     return {'labels': labels}
 
 if __name__ == '__main__':
-    import os
-
-    # Get the username for creating repository names
     user_info = whoami()
     username = user_info['name']
 
+    import psutil
+
+    physical = psutil.cpu_count(logical=False)
+    num_proc = max(1, physical // 2)
+
     dataset = dataset.map(format_conversation, remove_columns=dataset.column_names, load_from_cache_file=False)
-    dataset = dataset.map(tokenize, batched=True, remove_columns=dataset.column_names, num_proc=max(1, os.cpu_count() - 1), load_from_cache_file=False)
+    dataset = dataset.map(tokenize, batched=True, remove_columns=dataset.column_names, num_proc=num_proc, load_from_cache_file=False)
     dataset = dataset.map(mask_user_prompts, load_from_cache_file=False)
 
-    # Push tokenizer to Hub
-    tokenizer_repo = f'{username}/gpt2-ultrachat-tokenizer'
-    print(f'Pushing tokenizer to {tokenizer_repo}...')
-    tokenizer.push_to_hub(tokenizer_repo)
-    print('Tokenizer successfully pushed to Hugging Face Hub!')
 
     # Push dataset to Hub
     dataset_repo = f'{username}/ultrachat-tokenized-dataset'

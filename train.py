@@ -1,19 +1,18 @@
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
-from datasets import load_from_disk, load_dataset
+from transformers import GPT2LMHeadModel
+from datasets import load_dataset
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from huggingface_hub import login, whoami
+from dotenv import load_dotenv
+from tokenizer_config import tokenizer
 
-# Authenticate with Hugging Face Hub
+load_dotenv()
 login()
 
-# Get the username for creating repository names
 user_info = whoami()
 username = user_info['name']
 
-# Load tokenizer and dataset from Hub
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-tokenizer')
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='train')
 dataset.set_format('torch')
 
@@ -37,7 +36,6 @@ for _ in range(epochs):
 
         progress_bar.update(1)
 
-# Push model to Hub
 model_repo = f'{username}/gpt2-ultrachat-finetuned'
 print(f'Pushing model to {model_repo}...')
 model.push_to_hub(model_repo)
