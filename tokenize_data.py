@@ -55,8 +55,8 @@ if __name__ == '__main__':
     user_info = whoami()
     username = user_info['name']
 
-    process_dataset(train_dataset)
-    process_dataset(test_dataset)
+    train_dataset = process_dataset(train_dataset)
+    test_dataset = process_dataset(test_dataset)
 
     processed_datasets = DatasetDict({
         'train': train_dataset,
