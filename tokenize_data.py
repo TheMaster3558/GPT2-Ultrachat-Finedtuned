@@ -72,7 +72,7 @@ if __name__ == '__main__':
     })
 
     # Push tokenizer to Hub
-    tokenizer_repo = f'{username}/gpt2-ultrachat-tokenizer'
+    tokenizer_repo = f'{username}/gpt2-ultrachat-finetuned'
     print(f'Pushing tokenizer to {tokenizer_repo}...')
     tokenizer.push_to_hub(tokenizer_repo)
     print('Tokenizer successfully pushed to Hugging Face Hub!')

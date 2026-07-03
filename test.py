@@ -13,27 +13,18 @@ login()
 user_info = whoami()
 username = user_info['name']
 
-# Load model and tokenizer
-print('Loading model and tokenizer...')
 model = GPT2LMHeadModel.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-tokenizer')
+tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
 
-# Load test dataset
-print('Loading test dataset...')
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='test')
 dataset.set_format('torch')
 
-# Create dataloader
 test_dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
 
-# Move model to device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 model.eval()
 
-print(f'Using device: {device}')
-print(f'Test dataset size: {len(dataset)}')
-print()
 
 # Calculate metrics
 total_loss = 0.0
@@ -41,7 +32,6 @@ total_tokens = 0
 all_logits = []
 all_labels = []
 
-print('Evaluating model on test set...')
 with torch.no_grad():
     for batch in tqdm(test_dataloader, desc='Evaluating'):
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -55,7 +45,6 @@ with torch.no_grad():
 avg_loss = total_loss / total_tokens
 perplexity = math.exp(avg_loss)
 
-print()
 print('=' * 50)
 print('TEST METRICS')
 print('=' * 50)
