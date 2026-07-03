@@ -157,6 +157,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local saved datasets and tokenizers
+saved_dataset/
+saved_tokenizer/
+saved_model/
+
 # Spyder project settings
 .spyderproject
 .spyproject
