@@ -14,7 +14,7 @@ user_info = whoami()
 username = user_info['name']
 
 model = GPT2LMHeadModel.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-fintuned')
+tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
 
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='test')
 dataset.set_format('torch')
