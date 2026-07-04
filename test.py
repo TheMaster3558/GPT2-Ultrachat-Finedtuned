@@ -24,7 +24,7 @@ model = model.to(device)
 model = torch.compile(model)
 model.eval()
 
-test_dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
+test_dataloader = DataLoader(dataset, batch_size=24, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
 
 # Calculate metrics
 total_loss = 0.0
