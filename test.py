@@ -19,12 +19,12 @@ tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned'
 dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='test')
 dataset.set_format('torch')
 
-device = torch.device('cuda')
+device = torch.device('xpu')
 model = model.to(device)
 model = torch.compile(model)
 model.eval()
 
-test_dataloader = DataLoader(dataset, batch_size=24, shuffle=False, num_workers=2, pin_memory=True, persistent_workers=True)
+test_dataloader = DataLoader(dataset, batch_size=24, shuffle=False, num_workers=2, pin_memory=False, persistent_workers=True)
 
 # Calculate metrics
 total_loss = 0.0
@@ -34,7 +34,7 @@ with torch.no_grad():
     for batch in tqdm(test_dataloader, desc='Evaluating'):
         batch = {k: v.to(device) for k, v in batch.items()}
 
-        with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
+        with torch.amp.autocast(device_type='xpu', dtype=torch.float16):
             outputs = model(**batch)
             loss = outputs.loss
 

@@ -1,3 +1,4 @@
+import psutil
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from datasets import load_dataset
 from torch.optim import AdamW
@@ -7,50 +8,55 @@ from huggingface_hub import login, whoami
 from dotenv import load_dotenv
 import torch
 
-load_dotenv()
-login()
+if __name__ == '__main__':
+    load_dotenv()
+    login()
 
-user_info = whoami()
-username = user_info['name']
+    user_info = whoami()
+    username = user_info['name']
 
-tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
-dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='train')
-dataset.set_format('torch')
+    tokenizer = GPT2Tokenizer.from_pretrained(f'{username}/gpt2-ultrachat-finetuned')
+    dataset = load_dataset(f'{username}/ultrachat-tokenized-dataset', split='train')
+    dataset.set_format('torch')
 
-model = GPT2LMHeadModel.from_pretrained('gpt2')
-model.resize_token_embeddings(len(tokenizer))
+    model = GPT2LMHeadModel.from_pretrained('gpt2')
+    model.resize_token_embeddings(len(tokenizer))
 
-device = torch.device('cuda')
-model = model.to(device)
-model = torch.compile(model)
+    device = torch.device('xpu')
+    model = model.to(device)
 
-train_dataloader = DataLoader(dataset, batch_size=24, shuffle=True, num_workers=2, pin_memory=True, persistent_workers=True)
-epochs = 3
-training_steps = epochs * len(train_dataloader)
-progress_bar = tqdm(range(training_steps))
+    physical = psutil.cpu_count(logical=False)
+    num_proc = max(1, physical // 2)
 
-optimizer = AdamW(model.parameters(), lr=5e-5, fused=True)
+    train_dataloader = DataLoader(
+        dataset, batch_size=12, shuffle=True, num_workers=num_proc,
+    persistent_workers=True,
+    prefetch_factor=2
+    )
 
-scaler = torch.amp.GradScaler()
+    epochs = 3
+    training_steps = epochs * len(train_dataloader)
+    progress_bar = tqdm(range(training_steps))
 
-for _ in range(epochs):
-    for step, batch in enumerate(train_dataloader):
-        optimizer.zero_grad()
+    optimizer = AdamW(model.parameters(), lr=5e-5)
 
-        batch = {k: v.to(device) for k, v in batch.items()}
+    for _ in range(epochs):
+        for step, batch in enumerate(train_dataloader):
+            optimizer.zero_grad()
 
-        with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
-            outputs = model(**batch)
-            loss = outputs.loss
+            batch = {k: v.to(device) for k, v in batch.items()}
 
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+            with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+                outputs = model(**batch)
+                loss = outputs.loss
 
-        progress_bar.update(1)
+            loss.backward()
+            optimizer.step()
+
+            progress_bar.update(1)
 
 
-model_repo = f'{username}/gpt2-ultrachat-finetuned'
-print(f'Pushing model to {model_repo}...')
-model.push_to_hub(model_repo)
-print('Model successfully pushed to Hugging Face Hub!')
+    model_repo = f'{username}/gpt2-ultrachat-finetuned'
+    print(f'Pushing model to {model_repo}...')
+    model.push_to_hub(model_repo)
+    print('Model successfully pushed to Hugging Face Hub!')
